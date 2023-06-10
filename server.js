@@ -129,16 +129,16 @@ server.listen(port, () => {
     })
     
     // emit event => "new_friend_request"
-    io.to(to_user.socket_id).emit("new_friend_request",{
+    io.to(to_user?.socket_id).emit("new_friend_request",{
       // 수신자와 발신자 정보를 포함할 요청 id 입니다.
       message : "New Friend Request Received"
-    } );
+    });
 
     // emit event => "request_user"
-    io.to(from_user.socket_id).emit("request_sent",{
+    io.to(from_user?.socket_id).emit("request_sent",{
       // 수신자와 발신자 정보를 포함할 요청 id 입니다.
       message : "Request sent successfully!"
-    } );
+    });
     // emit evnet => request
     // 특정 이벤트를 소켓 id로 보낼거임.
     // 또는 특정 클라이언트에게 다음과 같이 말할 수 있음. 그리고 해당 이름 전달
@@ -149,7 +149,7 @@ server.listen(port, () => {
 
     console.log(data,"accept_request");
 
-    const request_doc = await User.findById(request_doc.sender);
+    const request_doc = await User.findById(data.request_id);
     // 2) 그러기 위해서 요청문서를 가져옴.
     
     console.log(request_doc,"request_doc");
@@ -174,22 +174,22 @@ server.listen(port, () => {
     // 7) 이제 수락을 하던 거절을 하던 친구 요청창이 없어져야함. 그러기 위해 일단 대기 작성
     // FriendRequest에서 내 아이디를 찾아서 삭제하는 로직. 삭제하려는 요청 문서의 ID 전달
 
-    io.to(sender.socket_id).emit("request_accepted",{
+    io.to(sender?.socket_id).emit("request_accepted",{
       message : "Friend Request Accepted",
     });
-    io.to(receiver.socket_id).emit("request_accepted",{
+    io.to(receiver?.socket_id).emit("request_accepted",{
       message : "Friend Request Accepted",
     });
     // 요청이 수락됬다고 각 사용자에게 이벤트를 내보내는 부분 
 
   });
 
-  socket.on("end", function () {
-    console.log("Closing connection");
-    socket.disconnect(0);
-    // 특성 소켓에 대한 연결 닫음. 
+  // socket.on("end", function () {
+  //   console.log("Closing connection");
+  //   socket.disconnect(0);
+  //   // 특성 소켓에 대한 연결 닫음. 
 
-  })
+  // })
 
   // socket.on("accept_request", async (data) => {
   //   // accept friend request => add ref of each other in friends array
@@ -233,11 +233,11 @@ server.listen(port, () => {
   //   callback(existing_conversations);
   // });
 
-  socket.on("get_direct_conversations", async ({user_id},callback)=>{
+  socket.on("get_direct_conversations", async ({user_id},callback) => {
     const existing_conversations = await OneToOneMessage.find({
       participants : {$all : [user_id]},
       // 직접 채팅에 참여하는 모든 레코드 검색
-    }).populate("participants","firstName lastName _id email status");
+    }).populate("participants","firstName lastName _id email status"); //avatar
 
     console.log(existing_conversations,"겟 다이렉트 컨버세이션")
 
@@ -296,7 +296,7 @@ server.listen(port, () => {
         participants: [to, from],
       })
 
-      new_chat = await OneToOneMessage.findById(new_chat.id).populate("participants","firstName lastName _id email status")
+      new_chat = await OneToOneMessage.findById(new_chat).populate("participants","firstName lastName _id email status")
 
       console.log(new_chat);
       socket.emit("start_chat",new_chat);
@@ -306,7 +306,7 @@ server.listen(port, () => {
     else {
       socket.emit("start_chat", existing_conversations[0]);
     }
-  })
+  });
 
 
 
