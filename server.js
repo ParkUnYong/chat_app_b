@@ -73,7 +73,7 @@ server.listen(port, () => {
 
   if (user_id != null && Boolean(user_id)) {
     try {
-      User.findByIdAndUpdate(user_id, {
+      await User.findByIdAndUpdate(user_id, {
         socket_id: socket.id,
         status: "Online",
       });
@@ -149,7 +149,7 @@ server.listen(port, () => {
 
     console.log(data,"accept_request");
 
-    const request_doc = await User.findById(data.request_id);
+    const request_doc = await FriendRequest.findById(data.request_id);
     // 2) 그러기 위해서 요청문서를 가져옴.
     
     console.log(request_doc,"request_doc");
@@ -237,7 +237,7 @@ server.listen(port, () => {
     const existing_conversations = await OneToOneMessage.find({
       participants : {$all : [user_id]},
       // 직접 채팅에 참여하는 모든 레코드 검색
-    }).populate("participants","firstName lastName _id email status"); //avatar
+    }).populate("participants","firstName lastName avatar _id email status"); //avatar
 
     console.log(existing_conversations,"겟 다이렉트 컨버세이션")
 
@@ -332,6 +332,8 @@ server.listen(port, () => {
     const to_user = await User.findById(to);
     const from_user = await User.findById(from);
 
+    console.log(conversation_id,"방번호");
+
     // message => {to, from, type, created_at, text, file}
 
     const new_message = {
@@ -341,9 +343,13 @@ server.listen(port, () => {
       created_at: Date.now(),
       text: message,
     };
+     
+    console.log(new_message,"뉴메세지");
 
     // fetch OneToOneMessage Doc & push a new message to existing conversation
     const chat = await OneToOneMessage.findById(conversation_id);
+    
+    console.log(chat,"chat 몽고");
     chat.messages.push(new_message);
     // save to db`
     await chat.save({ new: true, validateModifiedOnly: true });

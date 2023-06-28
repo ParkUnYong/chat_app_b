@@ -1,6 +1,7 @@
-const sgMail = require("@sendgrid/mail");
+const { SESv2, SendEmailCommand } = require("@aws-sdk/client-sesv2");
+const REGION = "ap-northeast-2";
+const sesClient = new SESv2({ region: REGION });
 
-sgMail.setApiKey(process.env.SG_KEY);
 
 const sendSGMail = async ({
   to,
@@ -11,19 +12,28 @@ const sendSGMail = async ({
   text,
 }) => {
   try {
-    const from = "shreyanshshah242@gmail.com";
+    const from = process.env.DEV_EMAIL;
 
-    const msg = {
-      to: to, // Change to your recipient
-      from: from, // Change to your verified sender
-      subject: subject,
-      html: html,
-      // text: text,
-      attachments,
+    const params = {
+      Destination: {
+        ToAddresses: [to],
+      },
+      Content: {
+        Simple: {
+          Body: {
+            Html: { Data: html },
+          },
+          Subject: { Data: subject },
+        },
+        // TODO: Implement attached files
+        // Raw: { 
+        //   Data: attachments
+        // },
+      },
+      FromEmailAddress: from,
     };
-
-    
-    return sgMail.send(msg);
+    const data = sesClient.send(new SendEmailCommand(params));
+    return data;
   } catch (error) {
     console.log(error);
   }
